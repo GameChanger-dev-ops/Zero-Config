@@ -1,0 +1,84 @@
+name: Build & Test Zero-Config (Android + Windows)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build & Test Android Hub
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android-hub
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Run Android Unit Tests
+        run: gradle testDebugUnitTest --no-daemon
+
+      - name: Build Debug APK
+        run: gradle assembleDebug --no-daemon
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZeroConfig-Android-Debug-APK
+          path: android-hub/app/build/outputs/apk/debug/app-debug.apk
+
+  build-windows:
+    name: Build & Test Windows Bridge
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: windows-bridge
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore VpnBridge.Tests/VpnBridge.Tests.csproj
+
+      - name: Build Release (x64)
+        run: dotnet build VpnBridge.Tests/VpnBridge.Tests.csproj -c Release --no-restore
+
+      - name: Run Windows Unit Tests
+        run: dotnet test VpnBridge.Tests/VpnBridge.Tests.csproj -c Release --no-build --verbosity normal
+
+      - name: Publish Windows Binary
+        run: dotnet publish VpnBridge.csproj -c Release -r win-x64 --self-contained false -o ./publish
+
+      - name: Verify Published Executable Exists
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "./publish/ZeroConfigBridge.exe")) {
+            throw "Expected ./publish/ZeroConfigBridge.exe was not produced."
+          }
+
+      - name: Upload Windows Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZeroConfig-Windows-x64
+          path: windows-bridge/publish/

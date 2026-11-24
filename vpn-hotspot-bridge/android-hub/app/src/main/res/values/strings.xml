@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Zero-Config</string>
+    <string name="notification_channel_name">Zero-Config Bridge Service</string>
+    <string name="notification_title">Zero-Config VPN Hub Active</string>
+</resources>

@@ -1,0 +1,12 @@
+# Android / Gradle
+android-hub/.gradle/
+android-hub/build/
+android-hub/app/build/
+*.apk
+
+# .NET / Windows
+windows-bridge/bin/
+windows-bridge/obj/
+windows-bridge/publish/
+windows-bridge/Dependencies/*.exe
+windows-bridge/Dependencies/*.dll
