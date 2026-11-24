@@ -10,10 +10,12 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>ZeroConfigBridge</AssemblyName>
     <RootNamespace>ZeroConfigBridge</RootNamespace>
+    <DefaultItemExcludes>$(DefaultItemExcludes);VpnBridge.Tests\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Makaretu.Dns.Multicast.New" Version="0.38.0" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="8.0.1" />
   </ItemGroup>
 
   <ItemGroup>
