@@ -1,6 +1,6 @@
 using System;
 using System.Threading;
-using System.Windows.Forms;
+using System.Windows;
 using ZeroConfigBridge.UI;
 
 namespace ZeroConfigBridge;
@@ -15,17 +15,31 @@ internal static class Program
         _singleInstanceMutex = new Mutex(true, "Global\\ZeroConfigBridge_SingleInstance", out bool createdNew);
         if (!createdNew)
         {
-            MessageBox.Show(
+            System.Windows.MessageBox.Show(
                 "Zero-Config Bridge is already running in the Windows System Tray.",
                 "Zero-Config",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
             return;
         }
 
-        ApplicationConfiguration.Initialize();
-        using var context = new TrayApplicationContext();
-        Application.Run(context);
+        var app = new System.Windows.Application
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown
+        };
+
+        var mainWindow = new MainWindow();
+        using var trayHost = new TrayIconHost(mainWindow, () =>
+        {
+            mainWindow.AllowExit = true;
+            mainWindow.CleanupOnExitSync();
+            mainWindow.Close();
+            app.Shutdown();
+        });
+
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => mainWindow.CleanupOnExitSync();
+        mainWindow.Show();
+        app.Run();
         _singleInstanceMutex.ReleaseMutex();
     }
 }

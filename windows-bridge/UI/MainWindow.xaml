@@ -1,0 +1,502 @@
+<Window x:Class="ZeroConfigBridge.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Zero-Config — VPN Hotspot Bridge"
+        Width="920" Height="640"
+        MinWidth="820" MinHeight="560"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        AllowsTransparency="False"
+        ResizeMode="CanResize"
+        Background="#0B1120"
+        Foreground="#F8FAFC"
+        FontFamily="Segoe UI">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="54"
+                      CornerRadius="16"
+                      GlassFrameThickness="0"
+                      ResizeBorderThickness="6"
+                      UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <!-- Rounded Pill Button Template with smooth hover & press scale -->
+        <Style x:Key="PillButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="#F8FAFC" />
+            <Setter Property="Background" Value="#2563EB" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="18,10" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1" ScaleY="1" />
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="14"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.90" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.97" ScaleY="0.97" />
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.45" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Sidebar Nav Button -->
+        <Style x:Key="NavButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="#CBD5E1" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="13.5" />
+            <Setter Property="Height" Value="42" />
+            <Setter Property="Margin" Value="0,3" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Padding" Value="14,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="12"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Left" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.88" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Clean Dark Input Styling -->
+        <Style x:Key="DarkTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Background" Value="#0F172A" />
+            <Setter Property="Foreground" Value="#F8FAFC" />
+            <Setter Property="CaretBrush" Value="#38BDF8" />
+            <Setter Property="BorderBrush" Value="#334155" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="10,7" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="2" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border BorderBrush="#1E293B" BorderThickness="1">
+        <Border.Style>
+            <Style TargetType="Border">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding WindowState, RelativeSource={RelativeSource AncestorType=Window}}" Value="Maximized">
+                        <Setter Property="Margin" Value="7" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Border.Style>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- LEFT SIDEBAR -->
+            <Border Grid.Column="0" Background="#0F172A" BorderBrush="#1E293B" BorderThickness="0,0,1,0">
+                <Grid Margin="14,16,14,16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Stylized Z/C Vector Logo + Title -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="4,0,0,22">
+                        <Border Width="42" Height="42" CornerRadius="12" BorderBrush="#38BDF8" BorderThickness="1.5">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                    <GradientStop Color="#0B1120" Offset="0" />
+                                    <GradientStop Color="#172554" Offset="1" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Canvas Width="38" Height="38">
+                                <Path Stroke="#38BDF8" StrokeThickness="3.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                      Data="M 8,10 L 23,10 L 9,28 L 21,28" />
+                                <Path Stroke="#34D399" StrokeThickness="3.2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      Data="M 29,13 A 8,8.5 0 1,0 29,25" />
+                                <Ellipse Width="4.2" Height="4.2" Fill="#FFFFFF" Canvas.Left="16.5" Canvas.Top="16.8" />
+                            </Canvas>
+                        </Border>
+                        <StackPanel Margin="11,2,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="Zero-Config" FontSize="17" FontWeight="Bold" Foreground="#F8FAFC" />
+                            <TextBlock x:Name="TxtBrandSub" Text="PC VPN Bridge" FontSize="11.5" Foreground="#94A3B8" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Navigation Rail -->
+                    <StackPanel Grid.Row="1">
+                        <Button x:Name="BtnNavBridge" Style="{StaticResource NavButtonStyle}" Background="#2563EB" Foreground="#FFFFFF" Click="OnNavClick" Tag="0" Content="Bridge" />
+                        <Button x:Name="BtnNavTutorial" Style="{StaticResource NavButtonStyle}" Click="OnNavClick" Tag="1" Content="Quick Tutorial" />
+                        <Button x:Name="BtnNavLogs" Style="{StaticResource NavButtonStyle}" Click="OnNavClick" Tag="2" Content="Activity Logs" />
+                        <Button x:Name="BtnNavSupport" Style="{StaticResource NavButtonStyle}" Click="OnNavClick" Tag="3" Content="Support &amp; Studio" />
+                    </StackPanel>
+
+                    <!-- Sidebar Publisher Badge (Game_Changer Option C Tiles) -->
+                    <Border Grid.Row="2" Background="#111C33" CornerRadius="14" Padding="10" BorderBrush="#1E293B" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Grid Width="48" Height="30" Margin="0,0,8,0">
+                                <Border Width="22" Height="22" Background="#2563EB" CornerRadius="5" HorizontalAlignment="Left" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                                    <Border.RenderTransform>
+                                        <RotateTransform Angle="-8" />
+                                    </Border.RenderTransform>
+                                    <TextBlock Text="G" Foreground="#FFFFFF" FontWeight="ExtraBold" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <Border Width="22" Height="22" Background="#EF4444" CornerRadius="5" HorizontalAlignment="Right" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                                    <Border.RenderTransform>
+                                        <RotateTransform Angle="7" />
+                                    </Border.RenderTransform>
+                                    <TextBlock Text="C" Foreground="#FFFFFF" FontWeight="ExtraBold" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                            </Grid>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock x:Name="TxtFooter1" Text="Game_Changer Studios" FontSize="10.5" FontWeight="Bold" Foreground="#F8FAFC" TextTrimming="CharacterEllipsis" />
+                                <TextBlock x:Name="TxtFooter2" Text="a 1001 company" FontSize="9.5" Foreground="#38BDF8" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- RIGHT MAIN AREA -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="54" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- TOP BAR (Custom Chrome Header) -->
+                <Border Grid.Row="0" Background="#0F172A" BorderBrush="#1E293B" BorderThickness="0,0,0,1" Padding="20,0,14,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Pulsing Status Pill -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Grid Width="22" Height="22" Margin="0,0,8,0">
+                                <Ellipse x:Name="PulseHalo" Width="18" Height="18" Fill="#34D399" Opacity="0" RenderTransformOrigin="0.5,0.5">
+                                    <Ellipse.RenderTransform>
+                                        <ScaleTransform x:Name="PulseScale" ScaleX="1" ScaleY="1" />
+                                    </Ellipse.RenderTransform>
+                                </Ellipse>
+                                <Ellipse x:Name="StatusDot" Width="10" Height="10" Fill="#38BDF8" />
+                            </Grid>
+                            <TextBlock x:Name="TxtHeaderStatus" Text="Disconnected" FontSize="13.5" FontWeight="Bold" Foreground="#38BDF8" VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <!-- Language Toggle + Window Controls -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button x:Name="BtnLangToggle"
+                                    WindowChrome.IsHitTestVisibleInChrome="True"
+                                    Style="{StaticResource PillButtonStyle}"
+                                    Background="#1E293B"
+                                    Foreground="#38BDF8"
+                                    BorderBrush="#334155"
+                                    BorderThickness="1"
+                                    Padding="12,5"
+                                    FontSize="11.5"
+                                    Margin="0,0,10,0"
+                                    Content="EN → FR"
+                                    Click="OnToggleLanguage" />
+                            <Button WindowChrome.IsHitTestVisibleInChrome="True"
+                                    Style="{StaticResource PillButtonStyle}"
+                                    Background="#1E293B"
+                                    Width="32" Height="32" Padding="0" Margin="0,0,6,0"
+                                    Content="—"
+                                    Click="OnMinimizeWindow" />
+                            <Button WindowChrome.IsHitTestVisibleInChrome="True"
+                                    Style="{StaticResource PillButtonStyle}"
+                                    Background="#1E293B"
+                                    Width="32" Height="32" Padding="0"
+                                    Content="✕"
+                                    ToolTip="Hide to System Tray"
+                                    Click="OnHideToTray" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- ANIMATED PAGE HOST -->
+                <Grid Grid.Row="1" Margin="20">
+                    <Grid x:Name="PageHost" RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <TranslateTransform x:Name="PageSlideTransform" Y="0" />
+                        </Grid.RenderTransform>
+
+                        <!-- PAGE 0: BRIDGE -->
+                        <ScrollViewer x:Name="PageBridge" VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <!-- 3-Step Pipeline Card -->
+                                <Border Background="#111C33" CornerRadius="18" Padding="18" BorderBrush="#1E293B" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock x:Name="TxtPipelineTitle" Text="LIVE CONNECTION PIPELINE" FontSize="10.5" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,12" />
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Border Grid.Column="0" Background="#0F172A" CornerRadius="14" Padding="12,10" BorderBrush="#1E293B" BorderThickness="1">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock x:Name="TxtStepPhone" Text="1. Android Hub" FontWeight="Bold" FontSize="12.5" HorizontalAlignment="Center" Foreground="#CBD5E1" />
+                                                    <TextBlock x:Name="TxtStepPhoneState" Text="Idle" FontSize="11.5" HorizontalAlignment="Center" Foreground="#64748B" Margin="0,4,0,0" />
+                                                </StackPanel>
+                                            </Border>
+
+                                            <TextBlock Grid.Column="1" Text="──►" Foreground="#475569" VerticalAlignment="Center" Margin="8,0" FontWeight="Bold" />
+
+                                            <Border Grid.Column="2" Background="#0F172A" CornerRadius="14" Padding="12,10" BorderBrush="#1E293B" BorderThickness="1">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock x:Name="TxtStepTun" Text="2. VPNBridge TUN" FontWeight="Bold" FontSize="12.5" HorizontalAlignment="Center" Foreground="#CBD5E1" />
+                                                    <TextBlock x:Name="TxtStepTunState" Text="Idle" FontSize="11.5" HorizontalAlignment="Center" Foreground="#64748B" Margin="0,4,0,0" />
+                                                </StackPanel>
+                                            </Border>
+
+                                            <TextBlock Grid.Column="3" Text="──►" Foreground="#475569" VerticalAlignment="Center" Margin="8,0" FontWeight="Bold" />
+
+                                            <Border Grid.Column="4" Background="#0F172A" CornerRadius="14" Padding="12,10" BorderBrush="#1E293B" BorderThickness="1">
+                                                <StackPanel HorizontalAlignment="Center">
+                                                    <TextBlock x:Name="TxtStepHotspot" Text="3. Wi-Fi Hotspot" FontWeight="Bold" FontSize="12.5" HorizontalAlignment="Center" Foreground="#CBD5E1" />
+                                                    <TextBlock x:Name="TxtStepHotspotState" Text="Idle" FontSize="11.5" HorizontalAlignment="Center" Foreground="#64748B" Margin="0,4,0,0" />
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Bridge Configuration Card -->
+                                <Border Background="#111C33" CornerRadius="18" Padding="18" Margin="0,14,0,0" BorderBrush="#1E293B" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock x:Name="TxtConfigTitle" Text="BRIDGE CONFIGURATION" FontSize="10.5" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,12" />
+
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="12" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="130" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock x:Name="TxtLblDiscovery" Grid.Row="0" Grid.Column="0" Text="Discovery Uplink" VerticalAlignment="Center" Foreground="#94A3B8" />
+                                            <ComboBox x:Name="CmbMode" Grid.Row="0" Grid.Column="1" Height="34" SelectedIndex="0"
+                                                      Background="#0F172A" Foreground="#0F172A" Padding="10,4" />
+
+                                            <TextBlock x:Name="TxtLblSsid" Grid.Row="2" Grid.Column="0" Text="Hotspot SSID" VerticalAlignment="Center" Foreground="#94A3B8" />
+                                            <Grid Grid.Row="2" Grid.Column="1">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="14" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="10" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="8" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBox x:Name="TxtSsid" Grid.Column="0" Text="ZeroConfig-VPN" Style="{StaticResource DarkTextBoxStyle}" Height="34" />
+                                                <TextBlock x:Name="TxtLblPass" Grid.Column="2" Text="Password" VerticalAlignment="Center" Foreground="#94A3B8" />
+
+                                                <Grid Grid.Column="4">
+                                                    <PasswordBox x:Name="TxtPassHidden" Password="zeroconfig123" Height="34"
+                                                                 Background="#0F172A" Foreground="#F8FAFC" BorderBrush="#334155" BorderThickness="1" Padding="8,6" />
+                                                    <TextBox x:Name="TxtPassVisible" Text="zeroconfig123" Visibility="Collapsed" Style="{StaticResource DarkTextBoxStyle}" Height="34" />
+                                                </Grid>
+
+                                                <Button x:Name="BtnRevealPass" Grid.Column="6" Style="{StaticResource PillButtonStyle}"
+                                                        Background="#1E293B" Padding="10,6" Height="34" Content="👁" Click="OnToggleRevealPass" />
+                                            </Grid>
+                                        </Grid>
+
+                                        <CheckBox x:Name="ChkAutoReconnect" IsChecked="True" Margin="130,14,0,0" Foreground="#CBD5E1"
+                                                  Content="Auto-reconnect tunnel automatically if phone VPN resets" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Session Telemetry & Primary Action Card -->
+                                <Border Background="#111C33" CornerRadius="18" Padding="18" Margin="0,14,0,0" BorderBrush="#1E293B" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock x:Name="TxtTelemetry" Text="Uplink: --  •  Phone: --  •  Hotspot: --  •  Clients: 0"
+                                                   Foreground="#94A3B8" FontSize="12.5" Margin="0,0,0,14" TextTrimming="CharacterEllipsis" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button x:Name="BtnMainAction" Style="{StaticResource PillButtonStyle}"
+                                                    Background="#2563EB" MinWidth="220" Height="46" FontSize="14"
+                                                    Content="Connect &amp; Share VPN" Click="OnMainActionClick" />
+                                            <Button x:Name="BtnLeakTest" Style="{StaticResource PillButtonStyle}"
+                                                    Background="#1E293B" BorderBrush="#334155" BorderThickness="1"
+                                                    MinWidth="185" Height="46" Margin="12,0,0,0"
+                                                    Content="Check IP / DNS Leak" Click="OnLeakTestClick" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- PAGE 1: INTERACTIVE BEGINNER TUTORIAL -->
+                        <ScrollViewer x:Name="PageTutorial" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                            <Border Background="#111C33" CornerRadius="20" Padding="24" BorderBrush="#1E293B" BorderThickness="1">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,18">
+                                        <TextBlock x:Name="TxtTutHeader" Text="BEGINNER QUICK TUTORIAL" FontSize="11" FontWeight="Bold" Foreground="#38BDF8" VerticalAlignment="Center" />
+                                        <Border Background="#0F172A" CornerRadius="12" Padding="12,5" HorizontalAlignment="Right" BorderBrush="#334155" BorderThickness="1">
+                                            <TextBlock x:Name="TxtTutStepCounter" Text="Step 1 of 4" FontSize="11.5" FontWeight="Bold" Foreground="#CBD5E1" />
+                                        </Border>
+                                    </Grid>
+
+                                    <Border Background="#0F172A" CornerRadius="16" Padding="22" BorderBrush="#1E293B" BorderThickness="1">
+                                        <StackPanel x:Name="TutContentPanel">
+                                            <Border Width="48" Height="48" CornerRadius="24" Background="#172554" BorderBrush="#38BDF8" BorderThickness="1.5" HorizontalAlignment="Left">
+                                                <TextBlock x:Name="TxtTutNum" Text="1" FontSize="20" FontWeight="Bold" Foreground="#34D399" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                            <TextBlock x:Name="TxtTutStepTitle" Text="1. Turn On Your Phone VPN" FontSize="20" FontWeight="Bold" Foreground="#F8FAFC" Margin="0,14,0,8" TextWrapping="Wrap" />
+                                            <TextBlock x:Name="TxtTutStepDesc" FontSize="14" Foreground="#CBD5E1" TextWrapping="Wrap" LineHeight="22"
+                                                       Text="Start WireGuard, ProtonVPN, Mullvad, or OpenVPN on your Android phone first, then open Zero-Config Hub and tap 'Start Zero-Config Hub'." />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Grid Margin="0,20,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Button x:Name="BtnTutPrev" Grid.Column="0" Style="{StaticResource PillButtonStyle}" Background="#1E293B" Height="44" Content="Previous" Click="OnTutPrevClick" />
+                                        <Button x:Name="BtnTutNext" Grid.Column="2" Style="{StaticResource PillButtonStyle}" Background="#2563EB" Height="44" Content="Next Step" Click="OnTutNextClick" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </ScrollViewer>
+
+                        <!-- PAGE 2: ACTIVITY LOGS & ICS RECOVERY -->
+                        <Grid x:Name="PageLogs" Visibility="Collapsed">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <Border Grid.Row="0" Background="#111C33" CornerRadius="16" Padding="14" Margin="0,0,0,12" BorderBrush="#1E293B" BorderThickness="1">
+                                <Grid>
+                                    <TextBlock x:Name="TxtLogsTitle" Text="DIAGNOSTICS &amp; RECOVERY" FontSize="11" FontWeight="Bold" Foreground="#64748B" VerticalAlignment="Center" />
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button x:Name="BtnCopyLogs" Style="{StaticResource PillButtonStyle}" Background="#1E293B" Padding="14,7" Content="Copy Logs" Click="OnCopyLogsClick" />
+                                        <Button x:Name="BtnClearLogs" Style="{StaticResource PillButtonStyle}" Background="#1E293B" Padding="14,7" Margin="8,0,0,0" Content="Clear" Click="OnClearLogsClick" />
+                                        <Button x:Name="BtnResetIcs" Style="{StaticResource PillButtonStyle}" Background="#991B1B" Padding="14,7" Margin="8,0,0,0" Content="Force Reset Windows ICS" Click="OnResetIcsClick" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+
+                            <Border Grid.Row="1" Background="#020617" CornerRadius="16" Padding="10" BorderBrush="#1E293B" BorderThickness="1">
+                                <TextBox x:Name="TxtLogs" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                                         Background="Transparent" Foreground="#CBD5E1" BorderThickness="0" FontFamily="Consolas" FontSize="12" />
+                            </Border>
+                        </Grid>
+
+                        <!-- PAGE 3: SUPPORT & GAME_CHANGER STUDIOS -->
+                        <ScrollViewer x:Name="PageSupport" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                            <Border Background="#111C33" CornerRadius="20" Padding="24" BorderBrush="#1E293B" BorderThickness="1">
+                                <StackPanel>
+                                    <TextBlock x:Name="TxtSupportTitle" Text="CREATOR &amp; 24/7 SUPPORT" FontSize="11" FontWeight="Bold" Foreground="#38BDF8" Margin="0,0,0,16" />
+
+                                    <!-- Large Option C Tiles Brand Banner -->
+                                    <Border Background="#0F172A" CornerRadius="18" Padding="20" BorderBrush="#1E293B" BorderThickness="1">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Grid Width="96" Height="58" Margin="0,0,18,0">
+                                                <Border Width="46" Height="46" Background="#2563EB" CornerRadius="11" HorizontalAlignment="Left" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                                                    <Border.RenderTransform>
+                                                        <RotateTransform Angle="-8" />
+                                                    </Border.RenderTransform>
+                                                    <TextBlock Text="G" Foreground="#FFFFFF" FontWeight="ExtraBold" FontSize="26" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                                <Border Width="46" Height="46" Background="#EF4444" CornerRadius="11" HorizontalAlignment="Right" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                                                    <Border.RenderTransform>
+                                                        <RotateTransform Angle="7" />
+                                                    </Border.RenderTransform>
+                                                    <TextBlock Text="C" Foreground="#FFFFFF" FontWeight="ExtraBold" FontSize="26" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                            </Grid>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="Studios" FontSize="24" FontWeight="Bold" Foreground="#F8FAFC" />
+                                                <TextBlock Text="GAME CHANGER" FontSize="11" FontWeight="Bold" Foreground="#94A3B8" />
+                                                <TextBlock x:Name="TxtMadeByLine" Text="Made by Game_Changer Studios — a 1001 company" FontSize="12.5" FontWeight="SemiBold" Foreground="#38BDF8" Margin="0,6,0,0" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Support Contact Card -->
+                                    <Border Background="#0F172A" CornerRadius="18" Padding="20" Margin="0,16,0,0" BorderBrush="#1E293B" BorderThickness="1">
+                                        <StackPanel>
+                                            <TextBlock x:Name="TxtSupportDesc" TextWrapping="Wrap" Foreground="#CBD5E1" FontSize="13.5" LineHeight="20"
+                                                       Text="Need help setting up USB Tethering, Smart TV connection, or Windows ICS? Reach us anytime on WhatsApp or phone:" />
+                                            <TextBlock Text="+237 673533489" FontSize="22" FontWeight="Bold" Foreground="#34D399" Margin="0,12,0,16" />
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button x:Name="BtnWhatsApp" Style="{StaticResource PillButtonStyle}" Background="#10B981" Height="44" Content="Open WhatsApp Support" Click="OnWhatsAppClick" />
+                                                <Button x:Name="BtnCopyPhone" Style="{StaticResource PillButtonStyle}" Background="#1E293B" BorderBrush="#334155" BorderThickness="1" Height="44" Margin="12,0,0,0" Content="Copy +237 673533489" Click="OnCopyPhoneClick" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- Floating Animated Toast Banner -->
+                    <Border x:Name="ToastBanner" Visibility="Collapsed" Background="#1E293B" BorderBrush="#38BDF8" BorderThickness="1"
+                            CornerRadius="14" Padding="16,10" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,6,6">
+                        <TextBlock x:Name="TxtToast" Text="" Foreground="#F8FAFC" FontWeight="SemiBold" FontSize="12.5" />
+                    </Border>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
