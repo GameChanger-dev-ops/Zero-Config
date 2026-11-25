@@ -12,8 +12,11 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.os.SystemClock
 import androidx.core.app.NotificationCompat
 import com.vpnbridge.hub.R
+import com.vpnbridge.hub.network.HttpProxyServer
+import com.vpnbridge.hub.network.LocalInterfaceEndpoint
 import com.vpnbridge.hub.network.MdnsAdvertiser
 import com.vpnbridge.hub.network.Socks5ProxyServer
 import com.vpnbridge.hub.network.VpnNetworkMonitor
@@ -33,10 +36,12 @@ import kotlinx.coroutines.launch
 
 data class BridgeTelemetry(
     val isRunning: Boolean = false,
+    val httpEnabled: Boolean = true,
+    val uptimeSeconds: Long = 0L,
     val vpnState: VpnState = VpnState(),
     val mdnsActive: Boolean = false,
     val mdnsName: String = "",
-    val localAddresses: List<Pair<String, String>> = emptyList(),
+    val localAddresses: List<LocalInterfaceEndpoint> = emptyList(),
     val activeFlows: Int = 0,
     val totalRxBytes: Long = 0L,
     val totalTxBytes: Long = 0L,
@@ -49,10 +54,14 @@ class BridgeForegroundService : Service() {
     companion object {
         const val ACTION_START = "com.vpnbridge.hub.ACTION_START"
         const val ACTION_STOP = "com.vpnbridge.hub.ACTION_STOP"
+        const val ACTION_TOGGLE_HTTP = "com.vpnbridge.hub.ACTION_TOGGLE_HTTP"
+        const val EXTRA_ENABLE_HTTP = "extra_enable_http"
+
         private const val CHANNEL_ID = "zeroconfig_bridge_channel"
         private const val NOTIFICATION_ID = 1001
-        private const val SOCKS_PORT = 1080
-        private const val UDP_MUX_PORT = 1081
+        const val SOCKS_PORT = 1080
+        const val UDP_MUX_PORT = 1081
+        const val HTTP_PORT = 8080
 
         private val _telemetry = MutableStateFlow(BridgeTelemetry())
         val telemetry: StateFlow<BridgeTelemetry> = _telemetry.asStateFlow()
@@ -62,11 +71,14 @@ class BridgeForegroundService : Service() {
     private lateinit var vpnMonitor: VpnNetworkMonitor
     private lateinit var mdnsAdvertiser: MdnsAdvertiser
     private var proxyServer: Socks5ProxyServer? = null
+    private var httpProxyServer: HttpProxyServer? = null
 
     private var wakeLock: PowerManager.WakeLock? = null
     private var wifiLock: WifiManager.WifiLock? = null
-    private var telemetryJob: Job? = null
     private var multicastLock: WifiManager.MulticastLock? = null
+    private var telemetryJob: Job? = null
+    private var startedElapsedMs: Long = 0L
+    private var httpEnabled: Boolean = true
 
     override fun onCreate() {
         super.onCreate()
@@ -89,7 +101,12 @@ class BridgeForegroundService : Service() {
                 stopSelf()
                 return START_NOT_STICKY
             }
+            ACTION_TOGGLE_HTTP -> {
+                val enable = intent.getBooleanExtra(EXTRA_ENABLE_HTTP, true)
+                setHttpProxyEnabled(enable)
+            }
             ACTION_START, null -> {
+                httpEnabled = intent?.getBooleanExtra(EXTRA_ENABLE_HTTP, true) ?: true
                 promoteToForeground()
                 startBridge()
             }
@@ -98,13 +115,9 @@ class BridgeForegroundService : Service() {
     }
 
     private fun promoteToForeground() {
-        val notification = buildNotification("Starting SOCKS5 + mDNS Hub...")
+        val notification = buildNotification("Starting SOCKS5 + HTTP + mDNS Hub...")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(
-                NOTIFICATION_ID,
-                notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-            )
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
         } else {
             startForeground(NOTIFICATION_ID, notification)
         }
@@ -114,34 +127,51 @@ class BridgeForegroundService : Service() {
     private fun startBridge() {
         if (proxyServer != null) return
         acquireLocks()
+        startedElapsedMs = SystemClock.elapsedRealtime()
 
-        val server = Socks5ProxyServer(
+        val socks = Socks5ProxyServer(
             vpnNetworkProvider = { vpnMonitor.currentVpnNetwork() },
             socksPort = SOCKS_PORT,
             udpMuxPort = UDP_MUX_PORT
         )
-        server.start()
-        proxyServer = server
-        mdnsAdvertiser.start(SOCKS_PORT, UDP_MUX_PORT)
+        socks.start()
+        proxyServer = socks
+
+        if (httpEnabled) {
+            val http = HttpProxyServer(
+                vpnNetworkProvider = { vpnMonitor.currentVpnNetwork() },
+                httpPort = HTTP_PORT,
+                sharedActiveConnections = socks.activeConnections,
+                sharedRxBytes = socks.rxBytes,
+                sharedTxBytes = socks.txBytes
+            )
+            http.start()
+            httpProxyServer = http
+        }
+
+        mdnsAdvertiser.start(SOCKS_PORT, UDP_MUX_PORT, if (httpEnabled) HTTP_PORT else null)
 
         var lastRx = 0L
         var lastTx = 0L
         telemetryJob = serviceScope.launch {
             while (isActive) {
-                val curRx = server.rxBytes.get()
-                val curTx = server.txBytes.get()
+                val curRx = socks.rxBytes.get()
+                val curTx = socks.txBytes.get()
                 val rxRate = (curRx - lastRx).coerceAtLeast(0L)
                 val txRate = (curTx - lastTx).coerceAtLeast(0L)
                 lastRx = curRx
                 lastTx = curTx
 
+                val uptime = ((SystemClock.elapsedRealtime() - startedElapsedMs) / 1000L).coerceAtLeast(0L)
                 val state = BridgeTelemetry(
                     isRunning = true,
+                    httpEnabled = httpEnabled,
+                    uptimeSeconds = uptime,
                     vpnState = vpnMonitor.vpnState.value,
                     mdnsActive = mdnsAdvertiser.isRegistered.value,
                     mdnsName = mdnsAdvertiser.registeredName.value,
                     localAddresses = mdnsAdvertiser.getLocalInterfaceAddresses(),
-                    activeFlows = server.activeConnections.get(),
+                    activeFlows = socks.activeConnections.get(),
                     totalRxBytes = curRx,
                     totalTxBytes = curTx,
                     rxBytesPerSec = rxRate,
@@ -155,15 +185,43 @@ class BridgeForegroundService : Service() {
     }
 
     @Synchronized
+    private fun setHttpProxyEnabled(enable: Boolean) {
+        httpEnabled = enable
+        val socks = proxyServer
+        if (socks == null) {
+            _telemetry.value = _telemetry.value.copy(httpEnabled = enable)
+            return
+        }
+        if (enable && httpProxyServer == null) {
+            val http = HttpProxyServer(
+                vpnNetworkProvider = { vpnMonitor.currentVpnNetwork() },
+                httpPort = HTTP_PORT,
+                sharedActiveConnections = socks.activeConnections,
+                sharedRxBytes = socks.rxBytes,
+                sharedTxBytes = socks.txBytes
+            )
+            http.start()
+            httpProxyServer = http
+        } else if (!enable && httpProxyServer != null) {
+            httpProxyServer?.stop()
+            httpProxyServer = null
+        }
+        _telemetry.value = _telemetry.value.copy(httpEnabled = enable)
+    }
+
+    @Synchronized
     private fun stopBridge() {
         telemetryJob?.cancel()
         telemetryJob = null
         mdnsAdvertiser.stop()
+        httpProxyServer?.stop()
+        httpProxyServer = null
         proxyServer?.stop()
         proxyServer = null
         releaseLocks()
         _telemetry.value = BridgeTelemetry(
             isRunning = false,
+            httpEnabled = httpEnabled,
             vpnState = vpnMonitor.vpnState.value
         )
         stopForeground(STOP_FOREGROUND_REMOVE)
@@ -213,7 +271,7 @@ class BridgeForegroundService : Service() {
     }
 
     private fun updateNotification(state: BridgeTelemetry) {
-        val vpnTag = if (state.vpnState.isActive) "VPN: ${state.vpnState.interfaceName}" else "Waiting for VPN"
+        val vpnTag = if (state.vpnState.isActive) "VPN: ${state.vpnState.interfaceName}" else "VPN Paused (Fail-Closed)"
         val text = "$vpnTag | Flows: ${state.activeFlows} | ↓${state.rxBytesPerSec / 1024} KB/s ↑${state.txBytesPerSec / 1024} KB/s"
         getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, buildNotification(text))
     }
@@ -228,7 +286,7 @@ class BridgeForegroundService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.stat_sys_upload_done)
+            .setSmallIcon(R.drawable.ic_stat_zeroconfig)
             .setContentTitle(getString(R.string.notification_title))
             .setContentText(contentText)
             .setContentIntent(openIntent)

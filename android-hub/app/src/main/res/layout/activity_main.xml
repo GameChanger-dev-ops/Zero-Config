@@ -1,41 +1,83 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0F172A"
-    android:fillViewport="true">
+    android:background="#0B1120">
 
+    <!-- Persistent Top App Header -->
     <LinearLayout
-        android:layout_width="match_parent"
+        android:id="@+id/topHeader"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:background="#0F172A"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="14dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:contentDescription="Zero-Config Icon"
+            android:src="@mipmap/ic_launcher" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Zero-Config"
+                android:textColor="#F8FAFC"
+                android:textSize="19sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvHeaderSub"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="VPN Hub &amp; Direct Proxy"
+                android:textColor="#94A3B8"
+                android:textSize="12sp" />
+        </LinearLayout>
 
         <TextView
+            android:id="@+id/tvVpnBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Zero-Config"
-            android:textColor="#F8FAFC"
-            android:textSize="28sp"
+            android:background="#1E293B"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="5dp"
+            android:text="NO VPN"
+            android:textColor="#FBBF24"
+            android:textSize="11sp"
             android:textStyle="bold" />
+    </LinearLayout>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Android-to-PC Non-Root VPN Hub"
-            android:textColor="#94A3B8"
-            android:textSize="14sp" />
+    <!-- Tab Content Area -->
+    <FrameLayout
+        android:id="@+id/tabContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@id/bottomNav"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/topHeader">
 
-        <com.google.android.material.card.MaterialCardView
+        <!-- TAB 1: HUB DASHBOARD -->
+        <ScrollView
+            android:id="@+id/pageHub"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            app:cardBackgroundColor="#1E293B"
-            app:cardCornerRadius="16dp"
-            app:strokeColor="#334155"
-            app:strokeWidth="1dp">
+            android:layout_height="match_parent"
+            android:fillViewport="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -43,86 +85,135 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <!-- Main Control Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="VPN TUNNEL STATUS"
-                    android:textColor="#64748B"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
+                    app:cardBackgroundColor="#111C33"
+                    app:cardCornerRadius="18dp"
+                    app:strokeColor="#1E293B"
+                    app:strokeWidth="1dp">
 
-                <TextView
-                    android:id="@+id/tvVpnStatus"
-                    android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="18dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="BRIDGE STATUS"
+                                android:textColor="#64748B"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/tvUptime"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="monospace"
+                                android:text="00:00:00"
+                                android:textColor="#94A3B8"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tvBridgeStatus"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="Hub Stopped"
+                            android:textColor="#F8FAFC"
+                            android:textSize="22sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvVpnSummary"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Start your Android VPN app so traffic binds to tun0."
+                            android:textColor="#94A3B8"
+                            android:textSize="13sp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnToggleBridge"
+                            android:layout_width="match_parent"
+                            android:layout_height="54dp"
+                            android:layout_marginTop="16dp"
+                            android:text="Start Zero-Config Hub"
+                            android:textAllCaps="false"
+                            android:textSize="15sp"
+                            android:textStyle="bold"
+                            app:cornerRadius="14dp" />
+
+                        <com.google.android.material.materialswitch.MaterialSwitch
+                            android:id="@+id/switchHttpProxy"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:checked="true"
+                            android:text="Standalone HTTP/HTTPS Proxy (:8080) — Every-Proxy Mode"
+                            android:textColor="#CBD5E1"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- 2x2 Telemetry Grid -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="Checking VPN..."
-                    android:textColor="#F8FAFC"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:layout_marginTop="14dp"
+                    android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/tvVpnDetails"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Interface: --"
-                    android:textColor="#94A3B8"
-                    android:textSize="13sp" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        app:cardBackgroundColor="#111C33"
+                        app:cardCornerRadius="16dp"
+                        app:strokeColor="#1E293B"
+                        app:strokeWidth="1dp">
 
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            app:cardBackgroundColor="#1E293B"
-            app:cardCornerRadius="16dp"
-            app:strokeColor="#334155"
-            app:strokeWidth="1dp">
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="14dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="DOWNLOAD ↓" android:textColor="#64748B" android:textSize="10sp" android:textStyle="bold" />
+                            <TextView android:id="@+id/tvRxSpeed" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="0 B/s" android:textColor="#34D399" android:textSize="18sp" android:textStyle="bold" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        app:cardBackgroundColor="#111C33"
+                        app:cardCornerRadius="16dp"
+                        app:strokeColor="#1E293B"
+                        app:strokeWidth="1dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="BRIDGE TELEMETRY"
-                    android:textColor="#64748B"
-                    android:textSize="11sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvBridgeStatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="Stopped"
-                    android:textColor="#F8FAFC"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvAddresses"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:fontFamily="monospace"
-                    android:text="Listening: --"
-                    android:textColor="#CBD5E1"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:id="@+id/tvMdnsStatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="mDNS: Idle"
-                    android:textColor="#94A3B8"
-                    android:textSize="13sp" />
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="14dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="UPLOAD ↑" android:textColor="#64748B" android:textSize="10sp" android:textStyle="bold" />
+                            <TextView android:id="@+id/tvTxSpeed" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="0 B/s" android:textColor="#38BDF8" android:textSize="18sp" android:textStyle="bold" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -130,61 +221,325 @@
                     android:layout_marginTop="12dp"
                     android:orientation="horizontal">
 
-                    <TextView
-                        android:id="@+id/tvClients"
+                    <com.google.android.material.card.MaterialCardView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
                         android:layout_weight="1"
-                        android:text="Active Flows: 0"
-                        android:textColor="#38BDF8"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
+                        app:cardBackgroundColor="#111C33"
+                        app:cardCornerRadius="16dp"
+                        app:strokeColor="#1E293B"
+                        app:strokeWidth="1dp">
 
-                    <TextView
-                        android:id="@+id/tvThroughput"
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="14dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ACTIVE FLOWS" android:textColor="#64748B" android:textSize="10sp" android:textStyle="bold" />
+                            <TextView android:id="@+id/tvFlows" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="0" android:textColor="#F8FAFC" android:textSize="18sp" android:textStyle="bold" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
                         android:layout_weight="1"
-                        android:gravity="end"
-                        android:text="0 KB/s ↓  0 KB/s ↑"
-                        android:textColor="#34D399"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
+                        app:cardBackgroundColor="#111C33"
+                        app:cardCornerRadius="16dp"
+                        app:strokeColor="#1E293B"
+                        app:strokeWidth="1dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="14dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="TOTAL DATA" android:textColor="#64748B" android:textSize="10sp" android:textStyle="bold" />
+                            <TextView android:id="@+id/tvTotalData" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="0 MB" android:textColor="#CBD5E1" android:textSize="16sp" android:textStyle="bold" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
-
-                <TextView
-                    android:id="@+id/tvTotals"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Total: 0 MB ↓ / 0 MB ↑"
-                    android:textColor="#94A3B8"
-                    android:textSize="12sp" />
             </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+        </ScrollView>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnToggleBridge"
+        <!-- TAB 2: ENDPOINTS & NETWORK -->
+        <ScrollView
+            android:id="@+id/pageNetwork"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="20dp"
-            android:text="Start Zero-Config Hub"
-            android:textAllCaps="false"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:cornerRadius="14dp" />
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:visibility="gone">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnBatteryOpt"
-            style="@style/Widget.Material3.Button.OutlinedButton"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Direct Client Proxy (Every-Proxy Mode) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardBackgroundColor="#111C33"
+                    app:cardCornerRadius="16dp"
+                    app:strokeColor="#1E293B"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="STANDALONE PROXY (NO PC NEEDED)"
+                            android:textColor="#38BDF8"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvPrimaryEndpoint"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:fontFamily="monospace"
+                            android:text="Start Hub + Wi-Fi or Phone Hotspot to view IP"
+                            android:textColor="#F8FAFC"
+                            android:textSize="13sp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:orientation="horizontal">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnCopyHttp"
+                                style="@style/Widget.Material3.Button.TonalButton"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginEnd="6dp"
+                                android:layout_weight="1"
+                                android:text="Copy HTTP (:8080)"
+                                android:textAllCaps="false"
+                                android:textSize="12sp" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnCopySocks"
+                                style="@style/Widget.Material3.Button.TonalButton"
+                                android:layout_width="0dp"
+                                android:layout_height="42dp"
+                                android:layout_marginStart="6dp"
+                                android:layout_weight="1"
+                                android:text="Copy SOCKS5 (:1080)"
+                                android:textAllCaps="false"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- PC Bridge mDNS & Interfaces -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    app:cardBackgroundColor="#111C33"
+                    app:cardCornerRadius="16dp"
+                    app:strokeColor="#1E293B"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="PC BRIDGE &amp; LOCAL INTERFACES"
+                            android:textColor="#64748B"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvMdnsStatus"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="mDNS: Inactive"
+                            android:textColor="#CBD5E1"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/tvInterfacesList"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:fontFamily="monospace"
+                            android:text="--"
+                            android:textColor="#94A3B8"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Active VPN Details -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    app:cardBackgroundColor="#111C33"
+                    app:cardCornerRadius="16dp"
+                    app:strokeColor="#1E293B"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="BOUND VPN INTERFACE"
+                            android:textColor="#64748B"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvVpnDetails"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:fontFamily="monospace"
+                            android:text="Interface: --\nDNS: --"
+                            android:textColor="#CBD5E1"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- TAB 3: SETUP & HEALTH -->
+        <ScrollView
+            android:id="@+id/pageSetup"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="10dp"
-            android:text="Disable Battery Optimization (Recommended)"
-            android:textAllCaps="false"
-            android:textColor="#CBD5E1"
-            app:cornerRadius="12dp"
-            app:strokeColor="#475569" />
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:visibility="gone">
 
-    </LinearLayout>
-</ScrollView>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardBackgroundColor="#111C33"
+                    app:cardCornerRadius="16dp"
+                    app:strokeColor="#1E293B"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="SYSTEM HEALTH CHECK"
+                            android:textColor="#64748B"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvHealthVpn"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:text="• VPN Tunnel: Checking..."
+                            android:textColor="#F8FAFC"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/tvHealthNotif"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="• Notifications: Checking..."
+                            android:textColor="#F8FAFC"
+                            android:textSize="14sp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnBatteryOpt"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:layout_marginTop="14dp"
+                            android:text="Disable Battery Optimization"
+                            android:textAllCaps="false"
+                            android:textColor="#CBD5E1"
+                            app:cornerRadius="12dp"
+                            app:strokeColor="#334155" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    app:cardBackgroundColor="#111C33"
+                    app:cardCornerRadius="16dp"
+                    app:strokeColor="#1E293B"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="TWO WAYS TO SHARE YOUR VPN"
+                            android:textColor="#38BDF8"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:lineSpacingExtra="4dp"
+                            android:text="1. Zero-Config PC Mode (For Smart TVs &amp; Consoles):\nConnect phone to Windows PC via USB Tethering, Wi-Fi, or USB ADB -> Click 'Connect &amp; Share VPN' in ZeroConfigBridge.exe -> Connect any device to the PC hotspot with zero proxy setup.\n\n2. Direct Proxy Mode (No PC Required):\nTurn on your phone's Mobile Hotspot -> Go to the Endpoints tab -> Copy the HTTP (:8080) or SOCKS5 (:1080) address into your other phone or browser's Wi-Fi proxy settings."
+                            android:textColor="#CBD5E1"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+        </ScrollView>
+    </FrameLayout>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="#0F172A"
+        app:itemIconTint="#38BDF8"
+        app:itemTextColor="#CBD5E1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:menu="@menu/bottom_nav_menu" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

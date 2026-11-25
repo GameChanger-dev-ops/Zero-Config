@@ -43,7 +43,7 @@ jobs:
           path: android-hub/app/build/outputs/apk/debug/app-debug.apk
 
   build-windows:
-    name: Build & Test Windows Bridge
+    name: Build, Test & Bundle Windows Bridge
     runs-on: windows-latest
     defaults:
       run:
@@ -67,18 +67,52 @@ jobs:
       - name: Run Windows Unit Tests
         run: dotnet test VpnBridge.Tests/VpnBridge.Tests.csproj -c Release --no-build --verbosity normal
 
-      - name: Publish Windows Binary
-        run: dotnet publish VpnBridge.csproj -c Release -r win-x64 --self-contained false -o ./publish
-
-      - name: Verify Published Executable Exists
+      - name: Download & Verify Native Binaries (tun2socks + Wintun x64)
         shell: pwsh
         run: |
-          if (-not (Test-Path "./publish/ZeroConfigBridge.exe")) {
-            throw "Expected ./publish/ZeroConfigBridge.exe was not produced."
+          $ErrorActionPreference = "Stop"
+          $deps = Join-Path (Get-Location) "Dependencies"
+          New-Item -ItemType Directory -Path $deps -Force | Out-Null
+
+          # 1. Wintun 0.14.1 (verified SHA-256)
+          $wintunZip = Join-Path $env:TEMP "wintun-0.14.1.zip"
+          Invoke-WebRequest -Uri "https://www.wintun.net/builds/wintun-0.14.1.zip" -OutFile $wintunZip
+          $zipHash = (Get-FileHash $wintunZip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($zipHash -ne "07c256185d6ee3652e09fa55c0b673e2624b565e02c4b9091c79ca7d2f24ef51") {
+            throw "Wintun zip SHA-256 mismatch: $zipHash"
+          }
+          $wintunExtract = Join-Path $env:TEMP "wintun_extract"
+          Expand-Archive -Path $wintunZip -DestinationPath $wintunExtract -Force
+          $wintunDll = Join-Path $wintunExtract "wintun\bin\amd64\wintun.dll"
+          $dllHash = (Get-FileHash $wintunDll -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($dllHash -ne "e5da8447dc2c320edc0fc52fa01885c103de8c118481f683643cacc3220dafce") {
+            throw "wintun.dll SHA-256 mismatch: $dllHash"
+          }
+          Copy-Item $wintunDll (Join-Path $deps "wintun.dll") -Force
+
+          # 2. tun2socks v2.7.0 (windows-amd64)
+          $t2sZip = Join-Path $env:TEMP "tun2socks-windows-amd64.zip"
+          Invoke-WebRequest -Uri "https://github.com/xjasonlyu/tun2socks/releases/download/v2.7.0/tun2socks-windows-amd64.zip" -OutFile $t2sZip
+          $t2sExtract = Join-Path $env:TEMP "t2s_extract"
+          Expand-Archive -Path $t2sZip -DestinationPath $t2sExtract -Force
+          $t2sExe = Get-ChildItem $t2sExtract -Filter "*.exe" -Recurse | Select-Object -First 1
+          if (-not $t2sExe) { throw "tun2socks exe not found inside release archive." }
+          Copy-Item $t2sExe.FullName (Join-Path $deps "tun2socks.exe") -Force
+
+      - name: Publish Standalone Windows Package (Self-Contained x64)
+        run: dotnet publish VpnBridge.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o ./publish
+
+      - name: Verify All Bundled Runtime Files Exist
+        shell: pwsh
+        run: |
+          foreach ($f in @("ZeroConfigBridge.exe", "tun2socks.exe", "wintun.dll")) {
+            if (-not (Test-Path (Join-Path "./publish" $f))) {
+              throw "Missing bundled file in ./publish: $f"
+            }
           }
 
-      - name: Upload Windows Build
+      - name: Upload Plug-and-Play Windows Bridge Artifact
         uses: actions/upload-artifact@v6
         with:
-          name: ZeroConfig-Windows-x64
+          name: ZeroConfig-Windows-x64-Standalone
           path: windows-bridge/publish/

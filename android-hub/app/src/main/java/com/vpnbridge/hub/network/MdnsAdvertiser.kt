@@ -11,6 +11,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.net.Inet4Address
 import java.net.NetworkInterface
 
+data class LocalInterfaceEndpoint(
+    val ifaceName: String,
+    val ip: String,
+    val label: String
+)
+
 class MdnsAdvertiser(context: Context) {
 
     companion object {
@@ -27,7 +33,7 @@ class MdnsAdvertiser(context: Context) {
 
     private var activeListener: NsdManager.RegistrationListener? = null
 
-    fun start(socksPort: Int, udpMuxPort: Int) {
+    fun start(socksPort: Int, udpMuxPort: Int, httpPort: Int? = null) {
         stop()
 
         val listener = object : NsdManager.RegistrationListener {
@@ -59,6 +65,7 @@ class MdnsAdvertiser(context: Context) {
             setAttribute("app", "Zero-Config")
             setAttribute("udpmux", udpMuxPort.toString())
             setAttribute("proto", "socks5")
+            if (httpPort != null) setAttribute("http", httpPort.toString())
         }
 
         activeListener = listener
@@ -82,8 +89,8 @@ class MdnsAdvertiser(context: Context) {
         _registeredName.value = ""
     }
 
-    fun getLocalInterfaceAddresses(): List<Pair<String, String>> {
-        val results = mutableListOf<Pair<String, String>>()
+    fun getLocalInterfaceAddresses(): List<LocalInterfaceEndpoint> {
+        val results = mutableListOf<LocalInterfaceEndpoint>()
         try {
             val interfaces = NetworkInterface.getNetworkInterfaces() ?: return results
             while (interfaces.hasMoreElements()) {
@@ -95,11 +102,31 @@ class MdnsAdvertiser(context: Context) {
                 while (addrs.hasMoreElements()) {
                     val addr = addrs.nextElement()
                     if (!addr.isLoopbackAddress && addr is Inet4Address) {
-                        addr.hostAddress?.let { ip -> results.add(name to ip) }
+                        addr.hostAddress?.let { ip ->
+                            results.add(LocalInterfaceEndpoint(name, ip, classifyInterface(name, ip)))
+                        }
                     }
                 }
             }
         } catch (_: Exception) {}
-        return results
+        return results.sortedBy { priorityFor(it.label) }
+    }
+
+    private fun classifyInterface(name: String, ip: String): String {
+        val n = name.lowercase()
+        return when {
+            n.startsWith("rndis") || n.startsWith("usb") || n.startsWith("ncm") -> "USB Tethering"
+            n.startsWith("ap") || n.startsWith("swlan") || n.startsWith("softap") || n == "wlan1" || ip.startsWith("192.168.43.") -> "Phone Hotspot"
+            n.startsWith("wlan") -> "Wi-Fi LAN"
+            n.startsWith("eth") -> "Ethernet"
+            else -> "Local ($name)"
+        }
+    }
+
+    private fun priorityFor(label: String): Int = when {
+        label == "Phone Hotspot" -> 0
+        label == "USB Tethering" -> 1
+        label == "Wi-Fi LAN" -> 2
+        else -> 3
     }
 }

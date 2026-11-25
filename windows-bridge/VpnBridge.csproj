@@ -8,6 +8,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\ZeroConfig.ico</ApplicationIcon>
     <AssemblyName>ZeroConfigBridge</AssemblyName>
     <RootNamespace>ZeroConfigBridge</RootNamespace>
     <DefaultItemExcludes>$(DefaultItemExcludes);VpnBridge.Tests\**</DefaultItemExcludes>
@@ -19,8 +20,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Dependencies\tun2socks.exe" CopyToOutputDirectory="PreserveNewest" Condition="Exists('Dependencies\tun2socks.exe')" />
-    <None Include="Dependencies\wintun.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('Dependencies\wintun.dll')" />
+    <Content Include="Assets\ZeroConfig.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="Dependencies\tun2socks.exe" Link="tun2socks.exe" CopyToOutputDirectory="PreserveNewest" Condition="Exists('Dependencies\tun2socks.exe')" />
+    <None Include="Dependencies\wintun.dll" Link="wintun.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('Dependencies\wintun.dll')" />
   </ItemGroup>
 
 </Project>

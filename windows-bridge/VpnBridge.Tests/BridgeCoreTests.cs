@@ -22,7 +22,6 @@ public class BridgeCoreTests
         await client.ConnectAsync(IPAddress.Loopback, port);
         var stream = client.GetStream();
 
-        // Greeting: VER=5, NMETHODS=1, NO_AUTH=0
         await stream.WriteAsync(new byte[] { 0x05, 0x01, 0x00 });
         byte[] authResp = new byte[2];
         int n = await stream.ReadAsync(authResp);
@@ -30,7 +29,6 @@ public class BridgeCoreTests
         Assert.Equal(0x05, authResp[0]);
         Assert.Equal(0x00, authResp[1]);
 
-        // Unsupported BIND (0x02) -> expects REP=0x07 (Command not supported)
         await stream.WriteAsync(new byte[] { 0x05, 0x02, 0x00, 0x01, 127, 0, 0, 1, 0x00, 0x50 });
         byte[] cmdResp = new byte[10];
         int m = await stream.ReadAsync(cmdResp);
@@ -45,7 +43,7 @@ public class BridgeCoreTests
         using var mgr = new Tun2SocksManager();
         await Assert.ThrowsAsync<FileNotFoundException>(() =>
             mgr.StartAsync("127.0.0.1", 1080, null, null, null, CancellationToken.None));
-        mgr.Stop(); // Must be safe/idempotent
+        mgr.Stop();
     }
 
     [Fact]
@@ -54,5 +52,13 @@ public class BridgeCoreTests
         var controller = new HotspotController();
         var status = controller.GetCurrentStatus();
         Assert.NotNull(status);
+    }
+
+    [Fact]
+    public void IcsSharingManager_DisableAllSharingIsSafeOnHeadlessVm()
+    {
+        using var ics = new IcsSharingManager();
+        var ex = Record.Exception(() => ics.DisableAllSharing());
+        Assert.Null(ex);
     }
 }
