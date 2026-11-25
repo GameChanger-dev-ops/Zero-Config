@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 
 class Socks5ProxyServer(
     private val vpnNetworkProvider: () -> Network?,
@@ -258,8 +259,7 @@ class Socks5ProxyServer(
 
             val sessionAlive = AtomicBoolean(true)
             val lastActivity = AtomicLong(System.currentTimeMillis())
-            @Volatile
-            var lastClientAddr: SocketAddressHolder? = null
+            val lastClientAddr = AtomicReference<SocketAddressHolder?>(null)
 
             val timeoutTask = watchdogPool?.scheduleWithFixedDelay({
                 if (System.currentTimeMillis() - lastActivity.get() > UDP_SESSION_IDLE_MS) {
@@ -277,7 +277,7 @@ class Socks5ProxyServer(
                     while (sessionAlive.get() && running.get()) {
                         upstreamUdp.receive(packet)
                         lastActivity.set(System.currentTimeMillis())
-                        val peer = lastClientAddr ?: continue
+                        val peer = lastClientAddr.get() ?: continue
                         val framed = buildSocks5UdpPacket(packet.address, packet.port, recvBuf, packet.length)
                         rxBytes.addAndGet(packet.length.toLong())
                         clientFacingUdp.send(DatagramPacket(framed, framed.size, peer.address, peer.port))
@@ -295,7 +295,7 @@ class Socks5ProxyServer(
                     while (sessionAlive.get() && running.get()) {
                         clientFacingUdp.receive(packet)
                         lastActivity.set(System.currentTimeMillis())
-                        lastClientAddr = SocketAddressHolder(packet.address, packet.port)
+                        lastClientAddr.set(SocketAddressHolder(packet.address, packet.port))
 
                         val parsed = parseSocks5UdpPacket(recvBuf, packet.length, vpnNetwork) ?: continue
                         txBytes.addAndGet(parsed.payloadLength.toLong())
